@@ -1,8 +1,8 @@
 # 🎉 ByteBot OpenWebUI Tool - Deployment Complete
 
 **Date:** December 29, 2025  
-**Version:** 1.1.0  
-**Status:** ✅ Successfully deployed to GitHub
+**Version:** 1.2.0  
+**Status:** ✅ Fully Operational - Task Creation Working!
 
 ---
 
@@ -111,27 +111,26 @@ Other files                        ~1,288 lines (various)
 - ✅ `list_active_tasks()` - Active task monitoring
 - ✅ `get_task_status()` - Task details retrieval
 - ✅ `cancel_task()` - Task cancellation
+- ✅ `execute_task()` - **NOW WORKING!** Task creation with model support
+- ✅ `execute_task_with_files()` - **NOW WORKING!** File uploads with tasks
+- ✅ `get_available_models()` - **NEW!** Model discovery
 - ✅ Helper functions - All operational
 
-### Known Issues
-- ⚠️ **Task Creation (POST /tasks):** ByteBot server returns HTTP 500
-  - **Cause:** External ByteBot server configuration issue
-  - **Impact:** Cannot create new tasks via API
-  - **Workaround:** Create tasks directly in ByteBot UI
-  - **Tool Status:** Catches and reports error correctly
+### v1.2.0 Fixes
+- ✅ **Task Creation FIXED!** Added required model field to task payloads
+- ✅ Model configuration system with user overrides
+- ✅ Automatic model injection in all task creation calls
+- ✅ Model discovery from recent tasks
 
 ### Recommended Uses
 ✅ **Ready for Production:**
-- Task monitoring and tracking
-- Task management (list, filter, cancel)
-- Health checks and connectivity verification
-- Task status reporting
-- Active task dashboards
-
-⚠️ **Pending ByteBot Fix:**
-- Automated task creation via OpenWebUI
-- File upload processing
-- End-to-end automation workflows
+- ✅ **Full automation workflows** - Create tasks via API
+- ✅ **File processing** - Upload documents for analysis
+- ✅ Task monitoring and tracking
+- ✅ Task management (list, filter, cancel)
+- ✅ Health checks and connectivity verification
+- ✅ Model selection and configuration
+- ✅ Complete end-to-end task lifecycle
 
 ---
 

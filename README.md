@@ -1,6 +1,6 @@
 # ByteBot Automation Tool for OpenWebUI
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/5p00kyy/bytebot-openwebui-tool/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/5p00kyy/bytebot-openwebui-tool/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![OpenWebUI](https://img.shields.io/badge/OpenWebUI-0.4.0+-orange.svg)](https://openwebui.com)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
@@ -67,6 +67,8 @@ Navigate to tool settings and configure:
 | `max_file_size_mb` | `100` | Maximum file size for uploads |
 | `max_files_per_task` | `20` | Maximum files per task |
 | `configured_models` | `Qwen3-VL-32B-Instruct` | Available AI models (documentation) |
+| `default_model_name` | `openai/Qwen3-VL-32B-Instruct` | Default AI model for task execution |
+| `default_model_provider` | `proxy` | AI model provider (proxy, openai, anthropic) |
 
 ### 3. Configure UserValves (User Preferences)
 
@@ -79,6 +81,7 @@ Each user can customize:
 | `show_execution_logs` | `True` | Include detailed logs in results |
 | `task_history_limit` | `20` | Tasks shown in list |
 | `notification_verbosity` | `normal` | Progress update frequency |
+| `preferred_model_name` | _(empty)_ | Override default model (e.g., "openai/Browser-Use") |
 
 ## Usage
 
@@ -164,6 +167,9 @@ get_task_status("task-abc123")
 
 # Cancel a running task
 cancel_task("task-abc123")
+
+# Discover available AI models
+get_available_models()
 ```
 
 ### Health Check
@@ -280,6 +286,36 @@ Cancel a running or pending ByteBot task.
 **Example:**
 ```python
 cancel_task("task-abc123")
+```
+
+---
+
+### get_available_models()
+
+Discover available AI models from recent ByteBot tasks.
+
+**Parameters:** None
+
+**Returns:** Formatted list of available models with details
+
+**Example:**
+```python
+get_available_models()
+```
+
+**Output:**
+```
+**Available Models from Recent Tasks:**
+
+1. **Qwen3-VL-32B-Instruct** ← **Currently Selected**
+   - Name: `openai/Qwen3-VL-32B-Instruct`
+   - Provider: proxy
+   - Context: 128,000 tokens
+
+2. **Browser-Use**
+   - Name: `openai/Browser-Use`
+   - Provider: proxy
+   - Context: 128,000 tokens
 ```
 
 ---

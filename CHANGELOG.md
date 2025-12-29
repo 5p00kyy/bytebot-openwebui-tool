@@ -1,5 +1,93 @@
 # ByteBot Automation Tool - Changelog
 
+## Version 1.2.0 (2025-12-29)
+
+### 🎉 Major Fix: Task Creation Now Working!
+
+**Problem:** Task creation (POST /tasks) was returning HTTP 500 errors, preventing any new tasks from being created.
+
+**Root Cause:** The ByteBot instance at http://192.168.0.102:9991 requires a `model` field in the task creation payload, but the tool wasn't including it.
+
+**Solution:** Added complete model configuration support to the tool.
+
+### New Features
+
+#### 1. Model Configuration System
+**Admin Configuration (Valves):**
+- `default_model_name` - Default AI model (e.g., "openai/Qwen3-VL-32B-Instruct")
+- `default_model_provider` - Model provider ("proxy", "openai", "anthropic")
+
+**User Preferences (UserValves):**
+- `preferred_model_name` - Override admin default on a per-user basis
+
+#### 2. New Function: `get_available_models()`
+Discovers available AI models by scanning recent tasks:
+```python
+await tools.get_available_models()
+```
+
+Returns formatted list showing:
+- Model name and title
+- Provider
+- Context window size
+- Which model is currently selected
+
+#### 3. Automatic Model Injection
+Both `execute_task()` and `execute_task_with_files()` now automatically include:
+- `model` - Full model configuration object
+- `type` - Task type ("IMMEDIATE")
+- `control` - Control mode ("ASSISTANT")
+
+### Technical Changes
+
+#### Updated Functions
+1. **`execute_task()`** - Now includes model field in task_data
+2. **`execute_task_with_files()`** - Adds model as JSON in multipart form data
+3. **Added `_get_model_config()`** - Helper to get model config with user override
+
+#### Task Creation Payload (Before)
+```json
+{
+  "description": "task description",
+  "priority": "MEDIUM"
+}
+```
+
+#### Task Creation Payload (After)
+```json
+{
+  "description": "task description",
+  "priority": "MEDIUM",
+  "type": "IMMEDIATE",
+  "control": "ASSISTANT",
+  "model": {
+    "name": "openai/Qwen3-VL-32B-Instruct",
+    "title": "Qwen3-VL-32B-Instruct",
+    "provider": "proxy",
+    "contextWindow": 128000
+  }
+}
+```
+
+### Test Results
+All task creation tests now passing (4/4):
+- ✅ Basic task creation
+- ✅ Task with HIGH priority
+- ✅ Model discovery
+- ✅ Custom model override (Browser-Use)
+
+### Breaking Changes
+None - fully backward compatible. Existing configurations will use the new defaults automatically.
+
+### Upgrade Notes
+1. No action required for most users - defaults work out of the box
+2. To use a different model:
+   - **Admin:** Set `default_model_name` in Valves
+   - **User:** Set `preferred_model_name` in UserValves
+3. Use `get_available_models()` to see what models are available
+
+---
+
 ## Version 1.1.0 (2025-12-29)
 
 ### Critical Fixes
