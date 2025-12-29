@@ -1,5 +1,10 @@
 # ByteBot Automation Tool for OpenWebUI
 
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/5p00kyy/bytebot-openwebui-tool/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![OpenWebUI](https://img.shields.io/badge/OpenWebUI-0.4.0+-orange.svg)](https://openwebui.com)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+
 Connect OpenWebUI to your ByteBot AI desktop agent for powerful automation task execution and management.
 
 ## Overview
