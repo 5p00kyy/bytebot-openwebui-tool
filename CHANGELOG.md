@@ -1,5 +1,68 @@
 # ByteBot Automation Tool - Changelog
 
+## Version 1.2.0 (2025-12-29)
+
+### Critical Fix: Task Creation Now Working
+
+**Problem:** Task creation was returning HTTP 500 errors, preventing any new tasks from being created.
+
+**Root Cause:** The ByteBot instance requires a `model` field in task creation payloads.
+
+**Solution:** Added automatic model configuration to all task creation calls.
+
+### New Features
+
+**Model Configuration System:**
+- Added `default_model_name` to Valves (admin setting)
+- Added `default_model_provider` to Valves (admin setting)
+- Added `preferred_model_name` to UserValves (user override)
+
+**New Function: get_available_models():**
+- Discovers available AI models from recent tasks
+- Shows currently selected model
+- Displays model details (name, provider, context window)
+
+**Automatic Model Injection:**
+- `execute_task()` now includes model field in payload
+- `execute_task_with_files()` adds model to multipart form data
+- Added `_get_model_config()` helper for model configuration
+
+### Technical Changes
+
+Task creation payload updated from:
+```json
+{
+  "description": "task",
+  "priority": "MEDIUM"
+}
+```
+
+To:
+```json
+{
+  "description": "task",
+  "priority": "MEDIUM",
+  "type": "IMMEDIATE",
+  "control": "ASSISTANT",
+  "model": {
+    "name": "openai/Qwen3-VL-32B-Instruct",
+    "title": "Qwen3-VL-32B-Instruct",
+    "provider": "proxy",
+    "contextWindow": 128000
+  }
+}
+```
+
+### Test Results
+- All task creation tests passing (4/4)
+- Verified with live ByteBot instance
+- Custom model override tested and working
+
+### Breaking Changes
+None - fully backward compatible.
+
+---
+
 ## Version 1.1.0 (2025-12-29)
 
 ### Critical Fixes

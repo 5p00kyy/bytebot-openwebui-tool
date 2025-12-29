@@ -6,11 +6,12 @@ git_url: https://github.com/bytebot-ai/bytebot
 description: Execute automation tasks on ByteBot AI desktop agent with complete task management
 required_open_webui_version: 0.4.0
 requirements: aiohttp>=3.9.0
-version: 1.1.0
+version: 1.2.0
 license: MIT
 """
 
 import asyncio
+import json
 import time
 from collections import Counter
 from datetime import datetime
@@ -182,6 +183,16 @@ class Tools:
             description="Comma-separated list of configured models (for documentation)",
         )
 
+        default_model_name: str = Field(
+            default="openai/Qwen3-VL-32B-Instruct",
+            description="Default AI model name for task execution",
+        )
+
+        default_model_provider: str = Field(
+            default="proxy",
+            description="AI model provider (proxy, openai, anthropic, etc.)",
+        )
+
     class UserValves(BaseModel):
         """User-specific preferences for ByteBot automation."""
 
@@ -206,6 +217,11 @@ class Tools:
         notification_verbosity: str = Field(
             default="normal",
             description="Progress update frequency (minimal, normal, verbose)",
+        )
+
+        preferred_model_name: str = Field(
+            default="",
+            description="Override default model (leave empty to use admin default)",
         )
 
     def __init__(self):
@@ -414,6 +430,23 @@ class Tools:
             return False
         return all(key in data for key in expected_keys)
 
+    def _get_model_config(self) -> dict:
+        """Get model configuration with user preference override."""
+        model_name = (
+            self.user_valves.preferred_model_name.strip()
+            if self.user_valves.preferred_model_name.strip()
+            else self.valves.default_model_name
+        )
+
+        model_title = model_name.split("/")[-1] if "/" in model_name else model_name
+
+        return {
+            "name": model_name,
+            "title": model_title,
+            "provider": self.valves.default_model_provider,
+            "contextWindow": 128000,
+        }
+
     def _format_task_summary(self, tasks: List[dict]) -> str:
         """Generate status summary from task list."""
         if not tasks:
@@ -537,7 +570,13 @@ class Tools:
 
         # Submit task
         try:
-            task_data = {"description": task_description, "priority": priority}
+            task_data = {
+                "description": task_description,
+                "priority": priority,
+                "type": "IMMEDIATE",
+                "control": "ASSISTANT",
+                "model": self._get_model_config(),
+            }
 
             task = await self._retry_request(
                 "POST",
@@ -689,6 +728,83 @@ class Tools:
             return error_msg
         except Exception as e:
             error_msg = f"Error fetching active tasks: {str(e)}"
+            await emitter.emit(error_msg, done=True)
+            return error_msg
+
+    async def get_available_models(
+        self,
+        __event_emitter__: Optional[Callable[[dict], Any]] = None,
+    ) -> str:
+        """
+        Discover available AI models from recent ByteBot tasks.
+
+        :return: Formatted list of available model configurations
+        """
+        emitter = EventEmitter(
+            __event_emitter__, self.user_valves.notification_verbosity
+        )
+
+        try:
+            await emitter.emit("Scanning tasks for available models...", done=False)
+
+            response_data = await self._retry_request(
+                "GET", f"{self.valves.bytebot_url}/tasks?page=1", emitter=emitter
+            )
+
+            if not self._validate_api_response(response_data, ["tasks"]):
+                return "Error: Unexpected API response format."
+
+            tasks = response_data.get("tasks", [])
+            models = []
+            seen = set()
+
+            for task in tasks:
+                model = task.get("model")
+                if model and model.get("name") not in seen:
+                    seen.add(model.get("name"))
+                    models.append(
+                        {
+                            "name": model.get("name"),
+                            "title": model.get("title"),
+                            "provider": model.get("provider"),
+                            "contextWindow": model.get("contextWindow"),
+                        }
+                    )
+
+            await emitter.emit(f"Found {len(models)} model(s)", done=True)
+
+            if not models:
+                return f"""No model configurations found in recent tasks.
+
+Current Default: {self.valves.default_model_name}
+
+To set a custom model, update user preferences:
+preferred_model_name: "openai/YourModelName"
+"""
+
+            output = ["Available Models:\n"]
+            current_model = self._get_model_config()["name"]
+
+            for i, model in enumerate(models, 1):
+                is_current = model["name"] == current_model
+                marker = " (Currently Selected)" if is_current else ""
+                output.append(f"{i}. {model['title']}{marker}")
+                output.append(f"   Name: {model['name']}")
+                output.append(f"   Provider: {model['provider']}")
+                output.append(f"   Context: {model['contextWindow']:,} tokens\n")
+
+            output.append("\nTo use a different model:")
+            output.append("Set preferred_model_name in user preferences")
+            output.append(f"\nAdmin Default: {self.valves.default_model_name}")
+
+            return "\n".join(output)
+
+        except aiohttp.ClientError as e:
+            error_msg = ErrorFormatter.format_api_error(e, "fetching models")
+            await emitter.emit(error_msg, done=True)
+            return error_msg
+        except Exception as e:
+            error_msg = f"Error discovering models: {str(e)}"
             await emitter.emit(error_msg, done=True)
             return error_msg
 
@@ -865,6 +981,9 @@ class Tools:
             form_data = aiohttp.FormData()
             form_data.add_field("description", task_description)
             form_data.add_field("priority", priority)
+            form_data.add_field("type", "IMMEDIATE")
+            form_data.add_field("control", "ASSISTANT")
+            form_data.add_field("model", json.dumps(self._get_model_config()))
 
             for file in __files__:
                 content = file.data.get("content", "")
